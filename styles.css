@@ -1,0 +1,65 @@
+/* style.css */
+body {
+    font-family: sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.price-display {
+    background-color: #e9e9e9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.price-display p {
+    margin: 0;
+    font-size: 1.1em;
+    color: #555;
+}
+
+.price-display span {
+    font-weight: bold;
+    color: #007bff;
+    /* Default price color */
+}
+
+/* Specific styles for Bitcoin */
+.bitcoin {
+    border-left: 5px solid #f7931a;
+    /* Bitcoin orange */
+}
+
+.bitcoin span {
+    color: #f7931a;
+}
+
+/* Specific styles for Ethereum */
+.ethereum {
+    border-left: 5px solid #627eea;
+    /* Ethereum blue */
+}
+
+.ethereum span {
+    color: #627eea;
+}
