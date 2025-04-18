@@ -1,117 +1,120 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
-export default function Home() {
-  const [currentAccount, setCurrentAccount] = useState(null);
-  const [toAddress, setToAddress] = useState("");
-  const [amount, setAmount] = useState("");
-  const [txHash, setTxHash] = useState(null); // 전송 결과 해시 저장용
+export default function MyEthValue() {
+  // 상태 변수 정의
+  const [account, setAccount] = useState(null);
+  const [ethBalance, setEthBalance] = useState(null);
+  const [ethPrice, setEthPrice] = useState(null);
 
-  async function connectWallet() {
+  // 지갑 연결 및 잔액 조회 함수
+  const connectWallet = async () => {
     if (!window.ethereum) {
-      alert("MetaMask를 설치해주세요.");
+      alert("MetaMask가 필요합니다.");
       return;
     }
     try {
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
-      setCurrentAccount(accounts[0]);
-      console.log("지갑 연결 성공:", accounts[0]);
-    } catch (error) {
-      if (error.code === 4001) {
-        console.log("사용자가 지갑 연결을 취소했습니다.");
-      } else {
-        console.error(error);
-      }
-    }
-  }
-
-  async function sendEther() {
-    if (!window.ethereum) return alert("MetaMask가 필요합니다!");
-    if (!currentAccount) return alert("먼저 지갑을 연결하세요.");
-    try {
-      if (!ethers.isAddress(toAddress))
-        return alert("올바른 지갑 주소를 입력하세요.");
-      if (amount === "" || isNaN(Number(amount)))
-        return alert("올바른 이더 금액을 입력하세요.");
-
+      await window.ethereum.request({ method: "eth_requestAccounts" });
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const tx = await signer.sendTransaction({
-        to: toAddress,
-        value: ethers.parseEther(amount),
-      });
-      console.log("트랜잭션 전송 완료:", tx.hash);
-      setTxHash(tx.hash); // 상태 업데이트
-      alert(`트랜잭션 전송 성공!
-Tx 해시: ${tx.hash}`);
-      // 입력 필드 초기화
-      setToAddress("");
-      setAmount("");
-    } catch (error) {
-      setTxHash(null); // 실패 시 해시 초기화
-      if (error.code === 4001) {
-        console.log("사용자가 전송을 취소했습니다.");
-        alert("전송이 취소되었습니다.");
-      } else {
-        console.error(error);
-        alert("전송 실패: " + (error.data?.message || error.message || error));
-      }
+      const address = await signer.getAddress();
+      setAccount(address);
+
+      const balanceWei = await provider.getBalance(address);
+      const balanceEth = ethers.formatEther(balanceWei);
+      setEthBalance(balanceEth);
+    } catch (err) {
+      console.error(err);
     }
-  }
+  };
+
+  // ETH 시세 조회 함수
+  const fetchEthPrice = async () => {
+    try {
+      const res = await fetch(
+        "https://api.upbit.com/v1/ticker?markets=KRW-ETH"
+      );
+      const data = await res.json();
+      const price = data[0].trade_price;
+      setEthPrice(price);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 컴포넌트 마운트 시 가격 가져오기
+  useEffect(() => {
+    fetchEthPrice();
+
+    const intervalId = setInterval(() => {
+      fetchEthPrice();
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   return (
-    <div className="p-4 min-h-screen bg-slate-50">
-      <h1 className="text-2xl font-bold mb-4 text-slate-800">DApp 예제</h1>
-      {!currentAccount ? (
-        <button
-          onClick={connectWallet}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        >
-          지갑 연결
-        </button>
-      ) : (
-        <div className="mt-6 p-4 border rounded shadow-md bg-white">
-          <h3 className="text-lg font-semibold mb-3 text-slate-800">이더 전송하기</h3>
-          <input
-            type="text"
-            placeholder="받는 지갑 주소 (0x...)"
-            value={toAddress}
-            onChange={(e) => setToAddress(e.target.value)}
-            className="w-full p-2 border rounded mb-2 focus:ring-2 focus:ring-indigo-400 outline-none text-slate-800"
-          />
-          <input
-            type="text"
-            placeholder="전송 ETH 양 (예: 0.1)"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full p-2 border rounded mb-3 focus:ring-2 focus:ring-indigo-400 outline-none text-slate-800"
-          />
-          <button
-            onClick={sendEther}
-            className="w-full px-4 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
-            disabled={!toAddress || !amount}
-          >
-            전송
-          </button>
-          {txHash && (
-            <div className="mt-3 p-2 bg-blue-50 border border-blue-400 rounded text-sm">
-              <p className="text-slate-700">마지막 전송 해시:</p>
-              <a
-                href={`https://sepolia.etherscan.io/tx/${txHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-700 hover:underline break-all"
-              >
-                {txHash}
-              </a>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="w-full max-w-md p-6 bg-white rounded-xl shadow-lg">
+        <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">
+          내 이더리움 자산
+        </h2>
+
+        {account ? (
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-500 mb-1">지갑 주소</p>
+              <p className="text-gray-700 font-mono text-sm truncate">
+                {account}
+              </p>
             </div>
-          )}
-        </div>
-      )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-500 mb-1">ETH 잔액</p>
+                <p className="text-xl font-semibold text-blue-700">
+                  {ethBalance ? parseFloat(ethBalance).toFixed(4) : "0"} ETH
+                </p>
+              </div>
+
+              <div className="p-4 bg-green-50 rounded-lg">
+                <p className="text-sm text-green-500 mb-1">ETH 시세</p>
+                <p className="text-xl font-semibold text-green-700">
+                  {ethPrice ? ethPrice.toLocaleString() : "..."} 원
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-purple-50 rounded-lg">
+              <p className="text-sm text-purple-500 mb-1">총 자산 가치</p>
+              <p className="text-2xl font-bold text-purple-700">
+                {ethPrice && ethBalance
+                  ? (parseFloat(ethBalance) * ethPrice).toLocaleString()
+                  : "0"}{" "}
+                원
+              </p>
+            </div>
+
+            <p className="text-xs text-gray-400 text-center mt-4">
+              * 가격 데이터는 Upbit API에서 실시간으로 업데이트됩니다
+            </p>
+          </div>
+        ) : (
+          <div className="text-center">
+            <p className="mb-6 text-gray-600">
+              MetaMask 지갑에 연결하여 ETH 자산 가치를 확인하세요
+            </p>
+            <button
+              onClick={connectWallet}
+              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            >
+              지갑 연결하기
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
