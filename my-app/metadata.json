@@ -1,0 +1,20 @@
+{
+    "name": "나만의 멋진 NFT #2",
+    "description": "이 NFT는 특별한 의미를 담고 있습니다.",
+    "image": "ipfs://bafkreib3quvx7kxnef7jldba3xee5eqy4xx3fyy2644xamt777qxz7t4se",
+    "attributes": [
+        {
+            "trait_type": "배경",
+            "value": "산"
+        },
+        {
+            "trait_type": "동물",
+            "value": "강아지"
+        },
+        {
+            "trait_type": "레벨",
+            "value": 10,
+            "display_type": "number"
+        }
+    ]
+}
